@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: empdir-sqlserver
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: Password123!
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Password123! -Q 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  employee-service:
+    build:
+      context: ./services/employee-service
+    container_name: empdir-employee-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;database=employeedb;encrypt=false;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: Password123!
+      SERVER_PORT: 8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  department-service:
+    build:
+      context: ./services/department-service
+    container_name: empdir-department-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://sqlserver:1433;database=employeedb;encrypt=false;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: Password123!
+      SERVER_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: empdir-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - employee-service
+      - department-service
+
+volumes:
+  sqlserver_data:

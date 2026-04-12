@@ -1,0 +1,13 @@
+node_modules/
+build/
+target/
+*.class
+*.jar
+.env
+*.tfstate
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+tfplan
+*.log
+.DS_Store

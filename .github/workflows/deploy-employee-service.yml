@@ -1,0 +1,36 @@
+name: Deploy Employee Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/employee-service/**'
+      - '.github/workflows/deploy-employee-service.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+          cache: maven
+
+      - name: Build JAR
+        working-directory: services/employee-service
+        run: mvn clean package -DskipTests -B
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: empdir-prod-employee-service
+          publish-profile: ${{ secrets.EMPLOYEE_SERVICE_PUBLISH_PROFILE }}
+          package: services/employee-service/target/*.jar
