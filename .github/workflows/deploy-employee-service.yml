@@ -31,6 +31,6 @@ jobs:
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: empdir-prod-employee-service
+          app-name: empdirch12-prod-employee-service
           publish-profile: ${{ secrets.EMPLOYEE_SERVICE_PUBLISH_PROFILE }}
           package: services/employee-service/target/*.jar
