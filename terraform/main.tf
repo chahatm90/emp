@@ -1,5 +1,6 @@
 locals {
   prefix = "${var.project}-${var.environment}"
+  kv_name = "${var.project}-${var.environment}-kv2"
 }
 
 # ── Resource Group ─────────────────────────────────────────────
@@ -13,7 +14,7 @@ resource "azurerm_resource_group" "main" {
 data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "main" {
-  name                       = "${local.prefix}-kv"
+  name                       = "${local.prefix}-kv3"
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   tenant_id                  = data.azurerm_client_config.current.tenant_id
@@ -37,7 +38,7 @@ resource "azurerm_key_vault_secret" "sql_password" {
 
 # ── Storage Account ────────────────────────────────────────────
 resource "azurerm_storage_account" "main" {
-  name                     = "${replace(local.prefix, "-", "")}storage"
+  name                     ="${replace(local.prefix, "-", "")}st2"
   resource_group_name      = azurerm_resource_group.main.name
   location                 = azurerm_resource_group.main.location
   account_tier             = "Standard"
@@ -76,7 +77,7 @@ resource "azurerm_service_plan" "main" {
   resource_group_name = azurerm_resource_group.main.name
   location            = azurerm_resource_group.main.location
   os_type             = "Linux"
-  sku_name            = "B2"
+  sku_name            = "F1"
   tags                = var.tags
 }
 
@@ -89,7 +90,7 @@ resource "azurerm_linux_web_app" "employee_service" {
   tags                = var.tags
 
   site_config {
-    always_on = true
+    always_on = false
     application_stack {
       java_server         = "JAVA"
       java_server_version = "17"
@@ -101,7 +102,7 @@ resource "azurerm_linux_web_app" "employee_service" {
   app_settings = {
     SPRING_DATASOURCE_URL      = "jdbc:sqlserver://${azurerm_mssql_server.main.fully_qualified_domain_name}:1433;database=employeedb;encrypt=true;trustServerCertificate=false"
     SPRING_DATASOURCE_USERNAME = var.sql_admin_login
-    SPRING_DATASOURCE_PASSWORD = "@Microsoft.KeyVault(VaultName=${azurerm_key_vault.main.name};SecretName=sql-admin-password)"
+    SPRING_DATASOURCE_PASSWORD = "@Microsoft.KeyVault(VaultName=${local.prefix}-kv3;SecretName=sql-admin-password)"
     SERVER_PORT                = "8080"
     WEBSITES_PORT              = "8080"
   }
@@ -120,7 +121,7 @@ resource "azurerm_linux_web_app" "department_service" {
   tags                = var.tags
 
   site_config {
-    always_on = true
+    always_on = false
     application_stack {
       java_server         = "JAVA"
       java_server_version = "17"
@@ -151,7 +152,7 @@ resource "azurerm_linux_web_app" "frontend" {
   tags                = var.tags
 
   site_config {
-    always_on = true
+    always_on = false
     application_stack {
       node_version = "20-lts"
     }

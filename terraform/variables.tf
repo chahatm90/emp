@@ -1,5 +1,5 @@
 variable "project" {
-  default = "empdir"
+  default = "empdirch12"
 }
 
 variable "environment" {
